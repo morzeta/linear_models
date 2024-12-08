@@ -159,3 +159,7 @@ cython_debug/
 
 # macintosh storage
 .DS_Store
+*.csv
+*.xlsx
+
+date_test
