@@ -4,12 +4,13 @@ import seaborn as sns
 from ydata_profiling import ProfileReport
 from preparation import read_data
 from utils import set_random_seed
+from feature_selection import recursive_elimination
 
 # set seed for reproducible results
 set_random_seed(1)
 
 # read and prepare data
-x, y = read_data()
+# x, y = read_data()
 
 # data normalisation
 # x = (x-x.mean())/x.std()
@@ -20,5 +21,7 @@ x, y = read_data()
 # plt.show()
 
 # data profile
-profile = ProfileReport(x, title="Profiling Report", explorative=True)
-profile.to_file("report.html")
+# profile = ProfileReport(x, title="Profiling Report", explorative=True)
+# profile.to_file("report.html")
+
+recursive_elimination("homogeneity_score")

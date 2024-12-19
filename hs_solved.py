@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 import statsmodels.api as sm
 from statsmodels.stats.diagnostic import het_white
-import data_prep
-x, y = data_prep.read_data()
+from preparation import read_data
+x, y = read_data()
 
 # Ajouter une constante pour le modèle
 x_with_const = sm.add_constant(x)
