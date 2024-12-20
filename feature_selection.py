@@ -30,3 +30,4 @@ def recursive_elimination(scoring="neg_mean_squared_error"):
     rfecv.fit(x_train, y_train.to_numpy().flatten())
 
     print(f"Optimal number of features: {rfecv.n_features_}")
+    print(f"Optimal number of features: {rfecv.ranking_}")

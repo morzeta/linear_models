@@ -2,19 +2,31 @@ import numpy as np
 import pandas as pd
 
 from ucimlrepo import fetch_ucirepo
+
 pd.options.mode.chained_assignment = None  # default='warn'
 
+data_columns = ['CO(GT)', 'PT08.S1(CO)', 'NMHC(GT)',
+                'C6H6(GT)', 'PT08.S2(NMHC)', 'NOx(GT)', 'PT08.S3(NOx)',
+                'NO2(GT)', 'PT08.S4(NO2)', 'PT08.S5(O3)', 'T', 'RH', 'AH']
 
-def read_data(data_id: int = 360) -> (pd.DataFrame, pd.DataFrame):
-    col = ['CO_GT', 'PT08_S1_CO', 'NMHC_GT',
-           'C6H6_GT', 'PT08_S2_NMHC', 'NOX_GT', 'PT08_S3_NOX',
-           'NO2_GT', 'PT08_S4_NO2', 'PT08_S5_O3', 'T', 'RH', 'AH']
+
+def read_data(data_id: int = 360) -> pd.DataFrame:
     air_quality = fetch_ucirepo(id=data_id)
-    x = air_quality.data.features[air_quality.data.features.columns[2:]]
-    x = random_fillna(x)
 
     air_quality.data.features["Time"] = np.array([int(i.split(":")[0]) for i in air_quality.data.features["Time"]])
-    y = pd.DataFrame(air_quality.data.features[air_quality.data.features.columns[1]])
+
+    data = random_fillna(air_quality.data.features[air_quality.data.features.columns[1:]])
+    return data
+
+
+# for this project we consider Time as y data and the rest as x data
+def get_x_y(data, normalize=True):
+    x = data[data.columns[1:]]
+    # normalize data with mean and std
+    if normalize:
+        x = (x - x.mean()) / x.std()
+
+    y = pd.DataFrame(data[data.columns[0]])
     return x, y
 
 

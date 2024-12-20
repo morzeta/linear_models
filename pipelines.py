@@ -2,6 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import statsmodels.api as sm
+import numpy as np
+import seaborn as sns
 
 from sklearn.model_selection import train_test_split
 from statsmodels.api import add_constant
@@ -12,12 +14,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 from statsmodels.stats.diagnostic import het_breuschpagan
-from preparation import read_data
+from preparation import read_data, get_x_y, data_columns
+from visualize import residual_subplots
+from html_report import regression_report
 
 
 def ordinary_linear_regression_v1():
     # Load and clean data
-    x, y = read_data()
+    data = read_data()
+    x, y = get_x_y(data)
 
     # Split the data into training and testing sets
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
@@ -31,7 +36,8 @@ def ordinary_linear_regression_v1():
     # outliers
     influence = model.get_influence()
     cooks_d = influence.cooks_distance[0]
-    # Example: Breusch-Pagan Test for heteroskedasticity
+
+    # Breusch-Pagan Test for heteroskedasticity
     residuals = model.resid
     bp_test = het_breuschpagan(residuals, x_with_const)
     labels = ['Lagrange multiplier statistic', 'p-value', 'f-value', 'f p-value']
@@ -45,7 +51,86 @@ def ordinary_linear_regression_v1():
     # Clear interpretation
     p_value = result['p-value']
     if p_value < 0.05:
-        print("\nConclusion: The results suggest homoskedasticity (p-value < 0.05).")
+        print("\nConclusion: The results suggest heteroskedasticity (p-value < 0.05).")
+        print("This means that the variance of the residuals is not constant.")
+    else:
+        print("\nConclusion: The results suggest homoskedasticity (p-value >= 0.05).")
+        print("This means that the variance of the residuals is constant.")
+
+
+def ordinary_linear_regression_v2():
+    # Load and clean data
+    data = read_data()
+    x, y = get_x_y(data)
+
+    # Split the data into training and testing sets
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+
+    # Fit the model
+    x_with_const = sm.add_constant(x_train)
+    model = sm.OLS(y_train, x_with_const).fit()
+
+    residuals = model.resid
+    cov_matrix = np.diag(residuals ** 2)
+
+    gls_model = sm.GLS(y_train, x_with_const, sigma=cov_matrix).fit()
+    print(gls_model.summary())
+
+    # Breusch-Pagan Test for heteroskedasticity
+    gls_residuals = gls_model.resid
+    bp_test = het_breuschpagan(gls_residuals, x_with_const)
+    labels = ['Lagrange multiplier statistic', 'p-value', 'f-value', 'f p-value']
+    result = dict(zip(labels, bp_test))
+
+    # Show results
+    print("\nResults of the Breusch-Pagan test for homoskedasticity :")
+    for key, value in result.items():
+        print(f"{key}: {value:.4f}")
+
+    # Clear interpretation
+    p_value = result['p-value']
+    if p_value < 0.05:
+        print("\nConclusion: The results suggest heteroskedasticity (p-value < 0.05).")
+        print("This means that the variance of the residuals is not constant.")
+    else:
+        print("\nConclusion: The results suggest homoskedasticity (p-value >= 0.05).")
+        print("This means that the variance of the residuals is constant.")
+
+
+def ordinary_linear_regression_v3():
+    # Load and clean data
+    data = read_data()
+    x, y = get_x_y(data)
+
+    # Split the data into training and testing sets
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+
+    # Fit the model
+    x_with_const = sm.add_constant(x_train)
+    model = sm.OLS(y_train, x_with_const, cov_type='HC3').fit()
+
+    # Summary of the model
+    print(model.summary())
+
+    # outliers
+    influence = model.get_influence()
+    cooks_d = influence.cooks_distance[0]
+
+    # Breusch-Pagan Test for heteroskedasticity
+    residuals = model.resid
+    bp_test = het_breuschpagan(residuals, x_with_const)
+    labels = ['Lagrange multiplier statistic', 'p-value', 'f-value', 'f p-value']
+    result = dict(zip(labels, bp_test))
+
+    # Show results
+    print("\nResults of the Breusch-Pagan test for homoskedasticity :")
+    for key, value in result.items():
+        print(f"{key}: {value:.4f}")
+
+    # Clear interpretation
+    p_value = result['p-value']
+    if p_value < 0.05:
+        print("\nConclusion: The results suggest heteroskedasticity (p-value < 0.05).")
         print("This means that the variance of the residuals is not constant.")
     else:
         print("\nConclusion: The results suggest homoskedasticity (p-value >= 0.05).")
@@ -54,7 +139,8 @@ def ordinary_linear_regression_v1():
 
 def linear_regression_v1():
     # Load and clean data
-    x, y = read_data()
+    data = read_data()
+    x, y = get_x_y(data)
 
     # Split the data into training and testing sets
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
@@ -72,32 +158,26 @@ def linear_regression_v1():
     mse = mean_squared_error(y_test, y_pred)
     r2 = r2_score(y_test, y_pred)
 
+    print("Intercept:", model.intercept_)
+    print("Coefficients:", dict(zip(data_columns, model.coef_[0])))
+
     print("Model evaluation :")
     print(f"Mean Square Error (MSE) : {mse:.2f}")
     print(f"Score R² : {r2:.2f}")
-
-    # Show Preview of Predictions
-    predictions = pd.DataFrame({'Target': y_test.values.flatten(), 'Predictions': y_pred.flatten()})
-    print(predictions)
 
     # Calculate the residuals
     residuals = y_test.values.flatten() - y_pred.flatten()
     print(f"Residuals size: {len(residuals)}")
     print(f"x_test size: {len(x_test)}")
 
-    # Plot the residuals against one or more explanatory variables
-    for column in x_test.columns:
-        plt.scatter(x_test[column], residuals, alpha=0.5)
-        plt.axhline(y=0, color='r', linestyle='--', linewidth=1)
-        plt.xlabel(column)
-        plt.ylabel("residues")
-        plt.title(f"Residues vs {column}")
-        plt.show()
+    # residual_subplots(x_test, residuals)
+    # plt.show()
 
 
 def linear_regression_v2():
     # Load and clean data
-    x, y = read_data()
+    data = read_data()
+    x, y = get_x_y(data)
 
     # Split the data into training and testing sets
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
@@ -137,50 +217,15 @@ def linear_regression_v2():
     labels = ['Lagrange multiplier statistic', 'p-value', 'f-value', 'f p-value']
     result_bp = dict(zip(labels, bp_test))
 
-    # Result and interpretation of the Breusch-Pagan test
-    bp_interpretation = ""
-    if result_bp['p-value'] < 0.05:
-        bp_interpretation = "The results suggest heteroskedasticity (p-value < 0.05)." \
-                            " The variance of the residuals is not constant."
-    else:
-        bp_interpretation = "The results suggest homoskedasticity (p-value >= 0.05)." \
-                            " The variance of the residuals is constant."
+    # regression_report(result_bp, mse, r2, fig.to_html(full_html=False, include_plotlyjs='cdn'))
 
-    # Save graphs and results to an HTML file
-    html_content = f"""
-    <html>
-    <head>
-        <title>Regression report</title>
-    </head>
-    <body>
-        <h1>Modeling Report</h1>
-        <h2>Model Evaluation</h2>
-        <p><b>Mean Square Error (MSE) :</b> {mse:.2f}</p>
-        <p><b>Score R² :</b> {r2:.2f}</p>
-
-        <h2>Test the Breusch-Pagan</h2>
-        <p><b>Lagrange multiplier statistic :</b> {result_bp['Lagrange multiplier statistic']:.4f}</p>
-        <p><b>p-value :</b> {result_bp['p-value']:.4f}</p>
-        <p><b>f-value :</b> {result_bp['f-value']:.4f}</p>
-        <p><b>f p-value :</b> {result_bp['f p-value']:.4f}</p>
-        <p><b>Interpretation :</b> {bp_interpretation}</p>
-
-        <h2>Residual Graphs</h2>
-        <div>{fig.to_html(full_html=False, include_plotlyjs='cdn')}</div>
-    </body>
-    </html>
-    """
-
-    # Save to HTML file
-    with open("regression report.html", "w", encoding="utf-8") as f:
-        f.write(html_content)
-
-    print("Report generated : regression report.html")
+    fig.show()
 
 
 def linear_regression_v3():
     # Load data
-    x, y = read_data()
+    data = read_data()
+    x, y = get_x_y(data)
 
     # Split the data into training and testing sets
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
@@ -261,3 +306,36 @@ def linear_regression_v3():
         f.write(html_content)
 
     print("Report generated : modeling report.html")
+
+
+def heteroskedasticity_test():
+    data = read_data()
+    x, y = get_x_y(data)
+
+    # Add a constant for the model
+    x_with_const = sm.add_constant(x)
+
+    # Perform the initial regression to detect heteroskedasticity
+    model = sm.OLS(y, x_with_const).fit()
+    residuals = model.resid
+
+    # White's test for heteroskedasticity
+    white_test = het_white(residuals, x_with_const)
+    labels = ['LM Statistics', 'LM p-value', 'F statistic', 'F p-value']
+    white_results = dict(zip(labels, white_test))
+    print("\nWhite's test results :")
+    for key, value in white_results.items():
+        print(f"{key}: {value:.4f}")
+
+    if white_results['LM p-value'] < 0.05:
+        print("\nConclusion: Heteroskedasticity detected. Data transformation in progress...")
+
+        # Logarithmic transformation (e.g. on y)
+        y_log = np.log1p(y)  # log(1 + y) to avoid negative values
+
+        # Regression with transformed data
+        model_log = sm.OLS(y_log, x_with_const).fit()
+        print("\nSummary after logarithmic transformation:")
+        print(model_log.summary())
+    else:
+        print("\nConclusion: No heteroskedasticity detected.")
