@@ -25,7 +25,7 @@ def ordinary_linear_regression_v1():
     x, y = get_x_y(data)
 
     # Split the data into training and testing sets
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=1)
     # Fit the model
     x_with_const = sm.add_constant(x_train)
     model = sm.OLS(y_train, x_with_const).fit()
@@ -67,7 +67,7 @@ def ordinary_linear_regression_v2():
     x, y = get_x_y(data)
 
     # Split the data into training and testing sets
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=1)
 
     # Fit the model
     x_with_const = sm.add_constant(x_train)
@@ -106,7 +106,7 @@ def ordinary_linear_regression_v3():
     x, y = get_x_y(data)
 
     # Split the data into training and testing sets
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=1)
 
     # Fit the model
     x_with_const = sm.add_constant(x_train)
@@ -146,7 +146,7 @@ def ordinary_linear_regression_v4():
     x, y = get_x_y(data)
 
     # Split the data into training and testing sets
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=1)
 
     # Fit the model
     x_with_const = sm.add_constant(x_train)
@@ -207,7 +207,7 @@ def linear_regression_v1():
     x, y = get_x_y(data)
 
     # Split the data into training and testing sets
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=1)
 
     # Create a linear regression model
     model = LinearRegression()
@@ -244,7 +244,7 @@ def linear_regression_v2():
     x, y = get_x_y(data)
 
     # Split the data into training and testing sets
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=1)
 
     # Create a linear regression model
     model = LinearRegression()
@@ -292,7 +292,7 @@ def linear_regression_v3():
     x, y = get_x_y(data)
 
     # Split the data into training and testing sets
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=1)
 
     # Regression model
     x_train_const = sm.add_constant(x_train)
