@@ -26,10 +26,13 @@ def ordinary_linear_regression_v1():
 
     # Split the data into training and testing sets
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-
     # Fit the model
     x_with_const = sm.add_constant(x_train)
     model = sm.OLS(y_train, x_with_const).fit()
+
+    pred_summary = model.get_prediction(sm.add_constant(x_test)).summary_frame(alpha=0.05)
+
+    print(pred_summary.head())
 
     # Summary of the model
     print(model.summary())
@@ -111,6 +114,67 @@ def ordinary_linear_regression_v3():
 
     # Summary of the model
     print(model.summary())
+
+    # outliers
+    influence = model.get_influence()
+    cooks_d = influence.cooks_distance[0]
+
+    # Breusch-Pagan Test for heteroskedasticity
+    residuals = model.resid
+    bp_test = het_breuschpagan(residuals, x_with_const)
+    labels = ['Lagrange multiplier statistic', 'p-value', 'f-value', 'f p-value']
+    result = dict(zip(labels, bp_test))
+
+    # Show results
+    print("\nResults of the Breusch-Pagan test for homoskedasticity :")
+    for key, value in result.items():
+        print(f"{key}: {value:.4f}")
+
+    # Clear interpretation
+    p_value = result['p-value']
+    if p_value < 0.05:
+        print("\nConclusion: The results suggest heteroskedasticity (p-value < 0.05).")
+        print("This means that the variance of the residuals is not constant.")
+    else:
+        print("\nConclusion: The results suggest homoskedasticity (p-value >= 0.05).")
+        print("This means that the variance of the residuals is constant.")
+
+
+def ordinary_linear_regression_v4():
+    # Load and clean data
+    data = read_data()
+    x, y = get_x_y(data)
+
+    # Split the data into training and testing sets
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+
+    # Fit the model
+    x_with_const = sm.add_constant(x_train)
+    model = sm.OLS(y_train, x_with_const, cov_type='HC3').fit()
+
+    # Summary of the model
+    print(model.summary())
+
+    print("\nf-test for linear combination of CO")
+    f_test_result = model.f_test(
+        data_columns[0] + " + " +
+        data_columns[1] + " = 0")
+    print(f_test_result)
+    print("\nf-test for linear combination of NOx")
+    f_test_result = model.f_test(
+        data_columns[5] + " + " +
+        data_columns[6] + " = 0")
+    print(f_test_result)
+
+    print("\nf-test for linear combination of coefficient for NOx and CO concentration")
+    f_test_result = model.f_test(
+        data_columns[1] + " = 0, " + data_columns[6] + " = 0")
+    print(f_test_result)
+
+    print("\nf-test for linear combination of of coefficient for NOx and CO sensor measure")
+    f_test_result = model.f_test(
+        data_columns[0] + " = 0, " + data_columns[5] + " = 0")
+    print(f_test_result)
 
     # outliers
     influence = model.get_influence()
